@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify
 import requests
 import os
+from gtts import gTTS
+import uuid
+
 
 app = Flask(__name__)
 
@@ -15,7 +18,7 @@ headers = {
 
 @app.route("/", methods=["GET"])
 def home():
-    return "Waifu AI Server is running 🚀"
+    return "Waifu AI Server is running "
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -39,9 +42,20 @@ def chat():
     if isinstance(result, list):
         reply = result[0].get("generated_text", "")
     else:
-        reply = "Erreur lors de la réponse de l'IA"
+        reply = "Erreur IA"
 
-    return jsonify({"reply": reply})
+    #  Génération audio
+    tts = gTTS(text=reply, lang=language)
+    filename = f"audio_{uuid.uuid4()}.mp3"
+    audio_path = f"static/{filename}"
+    tts.save(audio_path)
+
+    audio_url = request.host_url + audio_path
+
+    return jsonify({
+        "reply": reply,
+        "audio": audio_url
+    })
 
 
 if __name__ == "__main__":
